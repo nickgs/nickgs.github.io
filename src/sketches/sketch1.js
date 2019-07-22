@@ -23,6 +23,16 @@ export default function sketch (p) {
       p.fill("#8f1414");
       part.draw(p);
     };
+
+    p.windowResized= function() {
+
+      var canvasDiv = document.getElementById('myCanvas');
+      var width = canvasDiv.offsetWidth;
+      var height = canvasDiv.offsetHeight;
+      
+      p.resizeCanvas(width, height);
+      p.background(p.color("white"));
+    }
   };
 
 class Particle {

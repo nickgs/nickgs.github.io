@@ -29,6 +29,17 @@ export default function sketch (p) {
         num_parts++;
       }
     };
+
+    p.windowResized= function() {
+
+      var canvasDiv = document.getElementById('myCanvas');
+      var width = canvasDiv.offsetWidth;
+      var height = canvasDiv.offsetHeight;
+      
+      p.resizeCanvas(width, height);
+      p.background(p.color("white"));
+      num_parts = 0;
+    }
   };
 
 class Particle {

@@ -17,6 +17,16 @@ export default function sketch (p) {
       }
 
     };
+
+    p.windowResized= function() {
+
+      var canvasDiv = document.getElementById('myCanvas');
+      var width = canvasDiv.offsetWidth;
+      var height = canvasDiv.offsetHeight;
+      
+      p.resizeCanvas(width, height);
+      p.setup();
+    }
   
   };
 
@@ -30,7 +40,6 @@ class Particle {
         p.noStroke();
         p.background(p.color(255,255,255, 8));
         p.fill(p.color(73,111,135));
-        console.log(this.x / p.canvas.width);
         p.rect(this.x,this.y, p.random(100), p.random(300));
         this.y++;
     }

@@ -32,6 +32,15 @@ export default function sketch (p) { // p could be any variable name
   
       particleSystem.addParticle();
     };
+
+    p.windowResized= function() {
+
+      var canvasDiv = document.getElementById('myCanvas');
+      var width = canvasDiv.offsetWidth;
+      var height = canvasDiv.offsetHeight;
+      
+      p.resizeCanvas(width, height);
+    }
   
   
     //lets make a Particle.
