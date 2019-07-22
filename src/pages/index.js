@@ -1,8 +1,4 @@
 import React from 'react'
-import { Link } from 'gatsby'
-// import Layout from '../components/layout'
-// import Image from '../components/image'
-// import SEO from '../components/seo'
 
 import {createGlobalStyle} from 'styled-components'
 import { GlobalStyle } from '../styles/global-styles';
@@ -10,14 +6,15 @@ import { Container, SideBar, MediaZone, MainContent, TopNav, Title, Article } fr
 
 import NgsMenu from '../components/menu'; 
 import Hero from '../components/hero';
+import Header from '../components/header';
 
 import P5Wrapper from 'react-p5-wrapper';
 import sketch from '../sketches/white_bubble';
 
-
 const IndexPage = () => (
   <Container>
     <GlobalStyle/>
+    <Header/>
     <SideBar>
       <NgsMenu></NgsMenu>
     </SideBar>

@@ -14,11 +14,12 @@ import { Container, SideBar, MediaZone, MainContent, TopNav, Title, Article, Big
 
 
 import NgsMenu from '../components/menu'; 
-
+import Header from '../components/header';
 
 const IndexPage = () => (
   <Container>
     <GlobalStyle/>
+    <Header/>
     <SideBar>
       <NgsMenu></NgsMenu>
     </SideBar>
