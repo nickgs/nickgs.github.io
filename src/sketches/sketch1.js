@@ -6,6 +6,7 @@ export default function sketch (p) {
       var width = canvasDiv.offsetWidth;
       var height = canvasDiv.offsetHeight;
       p.createCanvas(width, height);
+      p.background(p.color(255,255,255));
 
       p.noStroke();
 
@@ -18,27 +19,26 @@ export default function sketch (p) {
   
     p.draw = function () {
       p.noStroke();
-      p.background(p.color(25,25,25, 3));
-     // p.fill("#8f1414");
-     part.draw(p);
-
-    
-      
+      p.background(p.color(255,255,255, 3));
+      p.fill("#8f1414");
+      part.draw(p);
     };
   };
 
 class Particle {
     constructor() {
-        this.x = 0;
+        this.x = 50;
         this.y = 0;
     }
 
     draw = function(p) {
-        p.circle(this.y,p.random(p.canvas.height), p.random(0,5));
+        p.circle(this.x,p.random(p.canvas.height), p.random(0,5));
         this.y++;
+        this.x++;
 
         if(this.y > p.canvas.width) {
           this.y =  0;
+          this.x = 50;
         }
     }
 }
