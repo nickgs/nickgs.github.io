@@ -1,10 +1,14 @@
-import styled, {createGlobalStyle} from 'styled-components'
+import {createGlobalStyle} from 'styled-components'
 
 
 const GlobalStyle = createGlobalStyle`
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
 
   body {
-    @import url('https://fonts.googleapis.com/css?family=Merriweather|Open+Sans');
+    margin: 0px;
+    /* @import url('https://fonts.googleapis.com/css?family=Merriweather|Open+Sans'); */
     font-family: 'Open Sans', sans-serif;
   }
 
@@ -13,4 +17,4 @@ const GlobalStyle = createGlobalStyle`
   }
 `
 
-export { GlobalStyle };
+export default GlobalStyle

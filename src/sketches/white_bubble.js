@@ -49,6 +49,6 @@ class Particle {
     }
 
     draw = function(p) {
-        p.circle(p.random(150, p.width),p.random(500, p.height), p.random(0,100) );
+        p.ellipse(p.random(150, p.width),p.random(500, p.height), p.random(0,100) );
     }
 }

@@ -42,7 +42,7 @@ class Particle {
     }
 
     draw = function(p) {
-        p.circle(this.x,p.random(p.canvas.height), p.random(0,5));
+        p.ellipse(this.x,p.random(p.canvas.height), p.random(0,5));
         this.y++;
         this.x++;
 

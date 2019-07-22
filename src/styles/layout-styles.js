@@ -93,9 +93,11 @@ export const Title = styled.h1`
   color: whitesmoke;
   background-color: #840015;
   width: 175px;
-  padding: 20px;
+  text-align: center;
+  line-height: 2;
   text-transform: uppercase;
   height: 2.2em;
+  margin: 0;
 
   grid-area: 1 / 1 / 4 / 2;
   /* border-bottom-right-radius: 20px; */

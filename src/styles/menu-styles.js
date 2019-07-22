@@ -8,13 +8,13 @@ const MenuStylesWrap = styled.div`
     width: 26px;
     height: 30px;
     left: 18.75px;
-    top: 31px;
+    top: 25px;
     
     @media only screen and (min-width: 321px) {
       width: 41.5px;
       height: 30px;
       left: 13.75px;
-      top: 31px;
+      top: 25px;
     }
   }
 

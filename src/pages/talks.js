@@ -9,7 +9,7 @@ import P5Wrapper from 'react-p5-wrapper';
 import sketch from '../sketches/connector.js';
 
 import styled, {createGlobalStyle} from 'styled-components'
-import { GlobalStyle } from '../styles/global-styles'
+import GlobalStyle from '../styles/global-styles';
 import { Container, SideBar, MediaZone, MainContent, TopNav, Title, Article, BigHello } from '../styles/layout-styles';
 
 

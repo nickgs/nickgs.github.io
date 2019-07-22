@@ -9,9 +9,8 @@ import P5Wrapper from 'react-p5-wrapper';
 import { Link } from 'gatsby'
 
 import sketch from '../sketches/sketch1';
-import { GlobalStyle } from '../styles/global-styles';
+import GlobalStyle from '../styles/global-styles';
 import NgsMenu from '../components/menu';
-
 
 
 const Container = styled.div`

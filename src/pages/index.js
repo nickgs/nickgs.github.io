@@ -1,7 +1,6 @@
 import React from 'react'
 
-import {createGlobalStyle} from 'styled-components'
-import { GlobalStyle } from '../styles/global-styles';
+import GlobalStyle from '../styles/global-styles';
 import { Container, SideBar, MediaZone, MainContent, TopNav, Title, Article } from '../styles/layout-styles';
 
 import NgsMenu from '../components/menu'; 
