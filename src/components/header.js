@@ -6,6 +6,7 @@ const Header = ({ siteTitle }) => (
     <meta charSet="utf-8" />
     <title>Nick Selvaggio - Long Island Technology Professional. Drupal and web development.</title>
     <meta name="description" content="Long Island web applications developer" />
+    <html lang="en"/>
   </Helmet>
 )
 
