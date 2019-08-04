@@ -32,8 +32,8 @@ const IndexPage = () => (
         <p>If you have a project you have been thinking about developing. Have a idea you want to explore. Or just want to talk shop. I would love to connect.</p>
         <p>I am connected on the social platforms below.</p>
         <ul>
-          <li><a target="_blank" href="https:/twitter.com/direct">@direct on Twitter.</a></li>
-          <li><a target="_blank" href="https:/linkedin.com/in/nickgs">nickgs on LinkedIn.</a></li>
+          <li><a target="_blank" href="https://twitter.com/direct">@direct on Twitter.</a></li>
+          <li><a target="_blank" href="https://linkedin.com/in/nickgs">nickgs on LinkedIn.</a></li>
           <li><a target="_blank" href="https://github.com/nickgs">nickgs on Github.</a></li>
         </ul>
         <p>Or just shoot me an email at <a href="mailto:nick@segosolutions.com">nick@segosolutions.com</a></p>
