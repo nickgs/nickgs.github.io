@@ -32,11 +32,11 @@ const IndexPage = () => (
         <p>I have the privilege to work with a talanted team of creative folks at Sego Solutions. We build web solutions in various platforms for clients with unique needs.</p>
         <p>Check us out at the link below: </p>
         <ul>
-          <li><a target="_blank" href="https://segosolutions.com">Sego Solutions</a></li>
+          <li><a target="_blank" rel="noreferrer" href="https://segosolutions.com">Sego Solutions</a></li>
         </ul>
         <p>In addition to Sego, I am Director of IT at the leading medical device manufacturer, American Diagnostic. In my time at ADC I have been able to build various solutions to meet the needs of a growing international business. </p>
         <ul>
-          <li><a target="_blank" href="https://www.adctoday.com">American Diagnostic Corp.</a></li>
+          <li><a target="_blank" rel="noreferrer" href="https://www.adctoday.com">American Diagnostic Corp.</a></li>
         </ul>
       </Article>
     </MainContent>

@@ -32,13 +32,13 @@ const IndexPage = () => (
         <BigHello>Speaking / Teaching</BigHello>
         <p>Below is a list of talks I've given. Some are longer form full day trainings, some turned into full semester curriculums.</p>
         <ul>
-            <li><a target="_blank" href="http://nickgs.com/drupal8-testdrive-module/#/">Drupal 8 Module Development</a></li>
-            <li><a target="_blank" href="http://nickgs.com/smart-contracts/#/">Getting Started with Ethereum Smart Contracts</a></li>
-            <li><a target="_blank" href="http://nickgs.com/code2art-talk/#/">Introduction to Creative Coding with P5.js</a></li>
-            <li><a target="_blank" href="http://nickgs.com/hello-docker/">Hello Docker</a></li>
-            <li><a target="_blank" href="http://nickgs.com/php-oo-slides/#/">Object Oriented Programming in PHP</a></li>
-            <li><a target="_blank" href="http://nickgs.com/hello-gatsby/">Hello GatsbyJS</a></li>
-            <li><a target="_blank" href="https://erc20.surge.sh">Create your own Cryto - An exploration of the ERC20 token standard.</a></li>
+            <li><a target="_blank" rel="noreferrer" href="http://nickgs.com/drupal8-testdrive-module/#/">Drupal 8 Module Development</a></li>
+            <li><a target="_blank" rel="noreferrer" href="http://nickgs.com/smart-contracts/#/">Getting Started with Ethereum Smart Contracts</a></li>
+            <li><a target="_blank" rel="noreferrer" href="http://nickgs.com/code2art-talk/#/">Introduction to Creative Coding with P5.js</a></li>
+            <li><a target="_blank" rel="noreferrer" href="http://nickgs.com/hello-docker/">Hello Docker</a></li>
+            <li><a target="_blank" rel="noreferrer" href="http://nickgs.com/php-oo-slides/#/">Object Oriented Programming in PHP</a></li>
+            <li><a target="_blank" rel="noreferrer" href="http://nickgs.com/hello-gatsby/">Hello GatsbyJS</a></li>
+            <li><a target="_blank" rel="noreferrer" href="https://erc20.surge.sh">Create your own Cryto - An exploration of the ERC20 token standard.</a></li>
         </ul>
         <p>I really like putting these together. If you have an event and looking for speakers, <a href="/contact">reach out.</a></p>
       </Article>
