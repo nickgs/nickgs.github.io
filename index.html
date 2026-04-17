@@ -1,0 +1,2002 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Nick Selvaggio — Quiet Making</title>
+<meta name="description" content="Nick Selvaggio — builder, teacher, operator on Long Island, NY. Quiet making at the intersection of Ethereum, AI, and useful software." />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-1242921-6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-1242921-6');
+</script>
+
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+<style>
+  :root {
+    /* golden hour defaults — Tweaks panel can override */
+    --paper: #f2ead9;
+    --paper-2: #e8dcc3;
+    --ink: #1a1613;
+    --ink-soft: #3b332c;
+    --ink-mute: #6a5d4f;
+    --sakura: #c97a7a;
+    --indigo: #3a5a7a;
+    --indigo-soft: #6a8aa8;
+    --rule: rgba(26,22,19,0.14);
+
+    --serif: "Cormorant Garamond", Georgia, serif;
+    --sans: "Inter", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+    /* subtle washi paper texture via layered gradients */
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.5), transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(180,140,90,0.08), transparent 60%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.06  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: auto, auto, 240px 240px;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    position: relative;
+    height: 100vh;
+    min-height: 640px;
+    width: 100%;
+    overflow: hidden;
+  }
+  #scene {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+  }
+  /* gentle vignette + paper edge on canvas */
+  .hero::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 50% 55%, transparent 45%, rgba(26,22,19,0.12) 100%),
+      linear-gradient(to bottom, rgba(242,234,217,0.35) 0%, transparent 18%, transparent 78%, var(--paper) 100%);
+  }
+
+  /* Top nav, sumi-style */
+  .nav {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 48px;
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow: 0 1px 12px rgba(0,0,0,0.35);
+  }
+  .nav .mark {
+    display: flex; align-items: baseline; gap: 14px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    letter-spacing: 0;
+    color: #ffffff;
+    text-transform: none;
+  }
+  .nav .mark .seal {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    padding: 6px 12px;
+    border: 1px solid rgba(255,255,255,0.8);
+    color: #ffffff;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    border-radius: 1px;
+    line-height: 1;
+  }
+  .nav .mark small {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: rgba(255,255,255,0.85);
+  }
+  .nav ul {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; gap: 28px;
+  }
+  .nav a {
+    color: inherit; text-decoration: none;
+    position: relative;
+  }
+  .nav a:hover { color: rgba(255,255,255,0.7); }
+
+  /* Hero type overlay — right-aligned vertical column + haiku */
+  .hero-overlay {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    z-index: 4;
+    padding: 0 48px 96px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 40px;
+    align-items: end;
+    pointer-events: none;
+  }
+  .hero-overlay > * { pointer-events: auto; }
+
+  /* Hero text gets its own light-on-dark palette so it sits cleanly
+     over the 3D scene regardless of the surrounding body theme.
+     Tuned separately per time-of-day via data-tod on <html>. */
+  .hero .haiku { color: rgba(246,236,214,0.82); text-shadow: 0 1px 24px rgba(0,0,0,0.35); }
+  .hero .haiku em { color: rgba(246,236,214,0.58); }
+  .hero .hero-name .eyebrow {
+    color: rgba(246,236,214,0.95);
+    background: rgba(0,0,0,0.22);
+    border-color: rgba(246,236,214,0.35);
+    backdrop-filter: blur(4px);
+  }
+  .hero .hero-name h1 { color: #f6ecd6; text-shadow: 0 2px 32px rgba(0,0,0,0.45); }
+  .hero .hero-name h1 em { color: #f4b88a; }  /* warm sakura-amber accent */
+  .hero .hero-name .sub { color: rgba(246,236,214,0.7); }
+  .hero .meta { color: rgba(246,236,214,0.85); text-shadow: 0 1px 10px rgba(0,0,0,0.3); }
+  .hero .meta .dot { background: #f4b88a; }
+  .hero .scroll-hint { color: rgba(246,236,214,0.75); text-shadow: 0 1px 10px rgba(0,0,0,0.3); }
+  .hero .scroll-hint::before { background: linear-gradient(to right, transparent, rgba(246,236,214,0.5)); }
+  .hero .scroll-hint::after  { background: linear-gradient(to left,  transparent, rgba(246,236,214,0.5)); }
+
+  /* Dawn is pale — use dark ink on the hero text there */
+  html[data-tod="dawn"] .hero .haiku { color: rgba(12,16,22,0.92); text-shadow: 0 1px 18px rgba(255,255,255,0.55); }
+  html[data-tod="dawn"] .hero .haiku em { color: rgba(12,16,22,0.72); }
+  html[data-tod="dawn"] .hero .hero-name .eyebrow {
+    color: #0c1016;
+    background: rgba(255,255,255,0.55);
+    border-color: rgba(12,16,22,0.4);
+  }
+  html[data-tod="dawn"] .hero .hero-name h1 { color: #0c1016; text-shadow: 0 2px 28px rgba(255,255,255,0.5); }
+  html[data-tod="dawn"] .hero .hero-name h1 em { color: #2a4a74; }
+  html[data-tod="dawn"] .hero .hero-name .sub { color: rgba(12,16,22,0.82); }
+  html[data-tod="dawn"] .hero .meta { color: rgba(12,16,22,0.92); text-shadow: 0 1px 10px rgba(255,255,255,0.45); }
+  html[data-tod="dawn"] .hero .meta .dot { background: #2a4a74; }
+  html[data-tod="dawn"] .hero .scroll-hint { color: rgba(12,16,22,0.82); text-shadow: 0 1px 10px rgba(255,255,255,0.45); }
+  html[data-tod="dawn"] .hero .scroll-hint::before { background: linear-gradient(to right, transparent, rgba(12,16,22,0.55)); }
+  html[data-tod="dawn"] .hero .scroll-hint::after  { background: linear-gradient(to left,  transparent, rgba(12,16,22,0.55)); }
+
+  .haiku {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 320px;
+  }
+  .haiku em {
+    display: block;
+    font-style: normal;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-top: 14px;
+  }
+
+  .hero-name {
+    text-align: center;
+    font-family: var(--serif);
+    font-weight: 300;
+  }
+  .hero-name .eyebrow {
+    display: inline-block;
+    font-family: var(--sans);
+    font-weight: 500;
+    background: var(--paper);
+    padding: 7px 16px;
+    border: 1px solid var(--rule);
+    border-radius: 1px;
+    box-shadow: 0 2px 12px rgba(26,22,19,0.1);
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 22px;
+  }
+  .hero-name h1 {
+    margin: 0;
+    font-size: clamp(44px, 6vw, 84px);
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .hero-name h1 em {
+    font-style: italic;
+    color: var(--indigo);
+  }
+  .hero-name .sub {
+    margin-top: 22px;
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    white-space: nowrap;
+  }
+
+  .meta {
+    justify-self: end;
+    text-align: right;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    line-height: 2;
+  }
+  .meta .dot {
+    display: inline-block;
+    width: 5px; height: 5px;
+    background: var(--indigo);
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    left: 50%; bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 5;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    display: flex; flex-direction: row; align-items: center; gap: 12px;
+    pointer-events: none;
+  }
+  .scroll-hint::before {
+    content: "";
+    width: 28px; height: 1px;
+    background: linear-gradient(to right, transparent, var(--ink-mute));
+  }
+  .scroll-hint::after {
+    content: "";
+    width: 28px; height: 1px;
+    background: linear-gradient(to left, transparent, var(--ink-mute));
+    animation: drip 2.6s ease-in-out infinite;
+    transform-origin: left;
+  }
+  @keyframes drip {
+    0%, 100% { transform: scaleX(0.2); opacity: 0.4; }
+    50% { transform: scaleX(1); opacity: 1; }
+  }
+
+  /* ---------- soft entrance animations ---------- */
+  @keyframes softRise {
+    from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+    to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+  }
+  @keyframes softFade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes canvasReveal {
+    from { opacity: 0; filter: blur(8px); }
+    to   { opacity: 1; filter: blur(0); }
+  }
+
+  #scene {
+    animation: canvasReveal 2.2s ease-out both;
+  }
+  .nav       { animation: softFade 1.4s ease-out 0.2s both; }
+  .haiku     { animation: softRise 1.6s ease-out 1.4s both; }
+  .hero-name .eyebrow { animation: softRise 1.2s ease-out 0.6s both; }
+  .hero-name h1       { animation: softRise 1.6s ease-out 0.85s both; }
+  .hero-name .sub     { animation: softRise 1.4s ease-out 1.15s both; }
+  .meta      { animation: softRise 1.4s ease-out 1.3s both; }
+  .scroll-hint { animation: softFade 1.8s ease-out 2s both; }
+
+  /* About / journal reveal on scroll via IntersectionObserver */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(3px);
+    transition: opacity 1.2s ease-out, transform 1.2s ease-out, filter 1.2s ease-out;
+    transition-delay: var(--reveal-delay, 0s);
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #scene, .nav, .haiku, .hero-name .eyebrow, .hero-name h1, .hero-name .sub, .meta, .scroll-hint {
+      animation: none !important;
+    }
+    .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+  }
+
+  /* ---------- ABOUT SECTION (journal list layout) ---------- */
+  .about {
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 120px 48px 160px;
+  }
+  .about-head {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 48px;
+    margin-bottom: 80px;
+    align-items: start;
+  }
+  .about-head .label {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    padding-top: 10px;
+    border-top: 1px solid var(--ink);
+  }
+  .about-head .label span {
+    display: block;
+    font-family: var(--sans);
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: var(--ink);
+    margin-top: 6px;
+    text-transform: none;
+  }
+  .about-head .intro {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(26px, 3.2vw, 40px);
+    line-height: 1.35;
+    color: var(--ink);
+    max-width: 760px;
+    text-wrap: pretty;
+  }
+  .about-head .intro em {
+    font-style: italic;
+    color: var(--indigo);
+  }
+
+  .journal {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 48px;
+  }
+  .journal .rail {
+    position: sticky; top: 40px;
+    align-self: start;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    padding-top: 10px;
+    border-top: 1px solid var(--ink);
+  }
+  .journal .rail span {
+    display: block;
+    font-family: var(--sans);
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: var(--ink);
+    margin-top: 6px;
+    text-transform: none;
+  }
+
+  .entries { display: flex; flex-direction: column; }
+  .entry {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 32px;
+    align-items: baseline;
+    padding: 28px 0;
+    border-top: 1px solid var(--rule);
+    transition: padding 0.4s ease;
+  }
+  .entry:last-child { border-bottom: 1px solid var(--rule); }
+  .entry:hover { padding-left: 12px; }
+  .entry .idx {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute);
+  }
+  .entry .body {
+    font-family: var(--serif);
+  }
+  .entry .body h3 {
+    margin: 0 0 6px 0;
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+  .entry .body h3 em {
+    font-style: italic;
+    color: var(--ink-mute);
+    font-size: 16px;
+    margin-left: 8px;
+    letter-spacing: 0;
+  }
+  .entry .body p {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink-soft);
+    max-width: 540px;
+    line-height: 1.7;
+  }
+  .entry .loc {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    white-space: nowrap;
+  }
+  .entry a.visit {
+    margin-top: 10px;
+    display: inline-block;
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 2px;
+  }
+  .entry a.visit:hover { color: var(--indigo); border-color: var(--indigo); }
+
+  /* ---------- TALKS GRID ---------- */
+  .talks {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 48px 120px;
+  }
+  .talks-head {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 48px;
+    margin-bottom: 56px;
+    align-items: start;
+  }
+  .talks-head .label {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    padding-top: 10px;
+    border-top: 1px solid var(--ink);
+  }
+  .talks-head .label span {
+    display: block;
+    font-family: var(--sans);
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: var(--ink);
+    margin-top: 6px;
+    text-transform: none;
+  }
+  .talks-head .intro {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(22px, 2.6vw, 32px);
+    line-height: 1.4;
+    color: var(--ink-soft);
+    max-width: 720px;
+    text-wrap: pretty;
+  }
+  .talks-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+  }
+  .talk {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: 32px 28px 40px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    color: inherit;
+    min-height: 240px;
+    overflow: hidden;
+    transition: background 0.5s ease;
+  }
+  .talk::before {
+    /* subtle indigo wash that grows on hover */
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 0;
+    background: linear-gradient(to top, rgba(58,90,122,0.08), transparent);
+    transition: height 0.5s ease;
+    pointer-events: none;
+  }
+  .talk:hover::before { height: 100%; }
+  .talk .num {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-mute);
+    display: block;
+    margin-bottom: 24px;
+  }
+  .talk h4 {
+    margin: 0 0 auto 0;
+    padding-bottom: 28px;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.25;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+  }
+  .talk .tag {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .talk .arrow {
+    position: absolute;
+    right: 22px;
+    bottom: 22px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--indigo);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .talk:hover .arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .talks-foot {
+    margin-top: 32px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-soft);
+    padding-left: 168px;
+    max-width: 700px;
+  }
+  .talks-foot a {
+    color: var(--indigo);
+    text-decoration: none;
+    border-bottom: 1px solid var(--indigo);
+  }
+  .talks-foot a:hover { opacity: 0.7; }
+
+  /* closing tile to balance the 3-col grid */
+  .talk.more {
+    background: transparent;
+    color: var(--ink-mute);
+    text-decoration: none;
+  }
+  .talk.more h4 {
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+  .talk.more:hover::before { height: 100%; }
+
+  /* Contact / footer */
+  .foot {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 48px 80px;
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 48px;
+    align-items: end;
+    border-top: 1px solid var(--rule);
+  }
+  .foot .label {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .foot .socials {
+    display: flex; gap: 28px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+  }
+  .foot .socials a {
+    color: var(--ink); text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .foot .socials a:hover { color: var(--indigo); border-color: var(--indigo); }
+  .foot .stamp {
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-align: right;
+    letter-spacing: 0.2em;
+  }
+
+  /* ---------- TOD PILL + TWEAKS PANEL ---------- */
+  #todPill {
+    position: fixed;
+    right: 20px; bottom: 20px;
+    z-index: 70;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: rgba(248, 244, 232, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(26,22,19,0.25);
+    border-radius: 50%;
+    color: #1a1613;             /* always dark glyph regardless of theme */
+    box-shadow: 0 6px 22px rgba(26,22,19,0.22);
+    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease, opacity 0.25s ease;
+  }
+  #todPill:hover { transform: scale(1.06); border-color: #1a1613; background: rgba(248, 244, 232, 1); }
+  #todPill.expanded { opacity: 0; pointer-events: none; transform: scale(0.85); }
+  #todPill svg { width: 20px; height: 20px; display: block; transition: opacity 0.25s ease; }
+  /* always show the sun glyph */
+  #todPill svg { display: none; }
+  #todPill svg[data-g="golden"] { display: block; }
+
+  #tweaks {
+    position: fixed;
+    right: 20px; bottom: 20px;
+    z-index: 68;
+    background: rgba(248, 244, 232, 0.96);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(26,22,19,0.2);
+    border-radius: 2px;
+    padding: 18px 20px;
+    font-family: var(--sans);
+    font-size: 11px;
+    color: #2a2520;
+    box-shadow: 0 10px 40px rgba(26,22,19,0.22);
+    min-width: 260px;
+    --tw-ink: #1a1613;
+    --tw-ink-mute: #6a5d4f;
+    --tw-rule: rgba(26,22,19,0.18);
+    transform-origin: bottom right;
+    transform: translateY(6px) scale(0.94);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  #tweaks.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+  #tweaks .close {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--ink-mute);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 4px;
+    margin: -4px -6px -4px 8px;
+    transition: color 0.2s ease;
+  }
+  #tweaks .close:hover { color: var(--ink); }
+  #tweaks h4 {
+    margin: 0 0 12px 0;
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--tw-ink);
+    letter-spacing: 0.1em;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  #tweaks h4 small {
+    font-family: var(--sans);
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--tw-ink-mute);
+  }
+  #tweaks .row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+  }
+  #tweaks button {
+    appearance: none;
+    border: 1px solid var(--tw-rule);
+    background: transparent;
+    padding: 10px 6px;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #2a2520;
+    cursor: pointer;
+    border-radius: 1px;
+    transition: all 0.25s ease;
+  }
+  #tweaks button:hover { border-color: var(--tw-ink); color: var(--tw-ink); }
+  #tweaks button.active {
+    background: var(--tw-ink);
+    color: #f8f4e8;
+    border-color: var(--ink);
+  }
+
+  /* ---------- RESPONSIVE BREAKPOINTS ---------- */
+
+  /* Tablets landscape (max 1024) */
+  @media (max-width: 1024px) {
+    .about, .talks, .foot { padding-left: 36px; padding-right: 36px; }
+    .about-head, .journal, .talks-head { grid-template-columns: 96px 1fr; gap: 36px; }
+    .foot { grid-template-columns: 96px 1fr auto; gap: 36px; }
+    .talks-foot { padding-left: 132px; }
+    .nav { padding: 22px 32px; }
+    .hero-overlay { padding: 0 32px 88px; gap: 24px; }
+  }
+
+  /* Tablets portrait (max 900) — talks go to 2 columns */
+  @media (max-width: 900px) {
+    .talks-grid { grid-template-columns: repeat(2, 1fr); }
+    .haiku { font-size: 18px; max-width: 260px; }
+    .hero-overlay { gap: 18px; }
+  }
+
+  /* Phones (max 760) */
+  @media (max-width: 760px) {
+    .nav { padding: 16px 20px; font-size: 11px; }
+    .nav ul { gap: 14px; }
+    .nav .mark { font-size: 18px; gap: 10px; }
+    .nav .mark .seal { font-size: 14px; padding: 5px 9px; }
+    .nav .mark small { display: none; }
+
+    .hero { min-height: 560px; height: 100svh; }
+    .hero-overlay {
+      grid-template-columns: 1fr;
+      padding: 0 20px 84px;
+      gap: 14px;
+      text-align: center;
+      justify-items: center;
+    }
+    .haiku, .meta { display: none; }
+    .hero-name { width: 100%; }
+    .hero-name .eyebrow { font-size: 9px; letter-spacing: 0.3em; padding: 6px 12px; margin-bottom: 14px; }
+    .hero-name h1 { font-size: clamp(40px, 11vw, 64px); }
+    .hero-name .sub { font-size: 10px; letter-spacing: 0.32em; margin-top: 14px; }
+    .scroll-hint { font-size: 9px; letter-spacing: 0.26em; bottom: 18px; }
+    .scroll-hint::before, .scroll-hint::after { width: 18px; }
+
+    .about, .talks, .foot {
+      padding-left: 20px; padding-right: 20px;
+    }
+    .about { padding-top: 72px; padding-bottom: 80px; }
+    .talks { padding-bottom: 80px; }
+    .about-head, .journal, .talks-head, .foot {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .about-head { margin-bottom: 56px; }
+    .about-head .label, .journal .rail, .talks-head .label {
+      border-top: none;
+      padding-top: 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--ink);
+      display: inline-block;
+      min-width: 120px;
+    }
+    .journal .rail { position: static; }
+    .about-head .intro { font-size: 22px; line-height: 1.45; }
+    .talks-head .intro { font-size: 18px; line-height: 1.55; }
+
+    .entry {
+      grid-template-columns: 40px 1fr;
+      grid-template-areas:
+        "idx body"
+        ".   loc";
+      gap: 12px 20px;
+      padding: 22px 0;
+    }
+    .entry .idx { grid-area: idx; }
+    .entry .body { grid-area: body; }
+    .entry .loc {
+      grid-area: loc;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      padding-top: 4px;
+    }
+    .entry:hover { padding-left: 0; }
+    .entry .body h3 { font-size: 22px; }
+    .entry .body h3 em { display: block; margin-left: 0; margin-top: 4px; font-size: 14px; }
+    .entry .body p { font-size: 13px; }
+    .entry a.visit { font-size: 10px; }
+
+    .talks-grid { grid-template-columns: 1fr; }
+    .talk { min-height: 180px; padding: 26px 22px 32px; }
+    .talk h4 { font-size: 20px; padding-bottom: 22px; }
+    .talk .num { margin-bottom: 18px; }
+    .talk .arrow { opacity: 1; transform: none; font-size: 16px; right: 18px; bottom: 18px; }
+    .talks-foot { padding-left: 0; font-size: 16px; margin-top: 24px; }
+
+    .foot { padding-top: 32px; padding-bottom: 56px; gap: 18px; }
+    .foot .socials { font-size: 18px; gap: 20px; flex-wrap: wrap; }
+    .foot .stamp { text-align: left; font-size: 10px; }
+
+    #todPill { right: 14px; bottom: 14px; width: 38px; height: 38px; }
+    #todPill svg { width: 18px; height: 18px; }
+    #tweaks {
+      right: 12px; bottom: 12px; left: 12px;
+      min-width: 0;
+      padding: 14px 16px;
+    }
+    #tweaks .row { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    #tweaks button { padding: 9px 4px; font-size: 9px; letter-spacing: 0.12em; }
+  }
+
+  /* Small phones (max 420) */
+  @media (max-width: 420px) {
+    .nav ul li:nth-child(2) { display: none; } /* drop "Work" to keep nav tidy */
+    .hero-name h1 { font-size: clamp(36px, 12vw, 56px); }
+    .about-head .intro { font-size: 20px; }
+    .foot .stamp { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TWEAKS DEFAULTS -->
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "timeOfDay": "auto"
+}/*EDITMODE-END*/;
+let currentTweaks = { ...TWEAK_DEFAULTS };
+</script>
+
+<nav class="nav">
+  <div class="mark">
+    <span class="seal">nickgs</span> <small>NICK&nbsp;·&nbsp;SELVAGGIO</small>
+  </div>
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#talks">Talks</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <canvas id="scene"></canvas>
+
+  <div class="hero-overlay">
+    <div class="haiku">
+      “petals fall softly —<br/>
+      a quiet hum of servers,<br/>
+      the tree keeps its shade.”
+      <em>— observed, long island</em>
+    </div>
+
+    <div class="hero-name">
+      <div class="eyebrow">Builder · Teacher · Operator</div>
+      <h1>Nick <em>Selvaggio</em></h1>
+    </div>
+
+    <div class="meta">
+      <div><span class="dot"></span>Long Island, NY</div>
+      <div>Est. 2003</div>
+      <div id="clock">—</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">Scroll</div>
+</section>
+
+<section class="about" id="about">
+  <div class="about-head">
+    <div class="label reveal">About<span>Intro</span></div>
+    <div class="intro reveal" style="--reveal-delay:0.15s">
+      I like to <em>learn and build</em> with people. My days orbit three quiet obsessions — the Ethereum blockchain, the practical use of emerging AI, and the long, patient craft of useful software.
+    </div>
+  </div>
+
+  <div class="journal" id="work">
+    <div class="rail reveal">Current<span>Threads</span></div>
+    <div class="entries">
+
+      <div class="entry reveal" style="--reveal-delay:0.05s">
+        <div class="idx">01</div>
+        <div class="body">
+          <h3>ADC <em>— running IT</em></h3>
+          <p>Keeping the lights on for a leading medical device manufacturer. Infrastructure, systems, the slow steady work of reliability.</p>
+          <a href="https://www.adctoday.com" class="visit" target="_blank" rel="noopener">adctoday.com ↗</a>
+        </div>
+        <div class="loc">Manufacturing · IT</div>
+      </div>
+
+      <div class="entry reveal" style="--reveal-delay:0.15s">
+        <div class="idx">02</div>
+        <div class="body">
+          <h3>Sego Solutions <em>— partnering</em></h3>
+          <p>Bespoke software built with small teams — e-commerce, content, whatever needs careful hands. Fifteen years, still listening.</p>
+          <a href="https://segosolutions.com" class="visit" target="_blank" rel="noopener">segosolutions.com ↗</a>
+        </div>
+        <div class="loc">Consulting</div>
+      </div>
+
+      <div class="entry reveal" style="--reveal-delay:0.25s">
+        <div class="idx">03</div>
+        <div class="body">
+          <h3>Long Island Blockchain <em>— validating</em></h3>
+          <p>Building and running validator infrastructure for Ethereum. A small stake in a public good, humming in the background.</p>
+          <a href="https://liblockchain.xyz" class="visit" target="_blank" rel="noopener">liblockchain.xyz ↗</a>
+        </div>
+        <div class="loc">Ethereum · Node Ops</div>
+      </div>
+
+      <div class="entry reveal" style="--reveal-delay:0.35s">
+        <div class="idx">04</div>
+        <div class="body">
+          <h3>Five Town College <em>— teaching</em></h3>
+          <p>Adjunct professor of creative coding. Passing along what I know; learning more from the questions I cannot answer.</p>
+          <a href="https://www.ftc.edu/" class="visit" target="_blank" rel="noopener">ftc.edu ↗</a>
+        </div>
+        <div class="loc">Education</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="talks" id="talks">
+  <div class="talks-head">
+    <div class="label reveal">Talks<span>Speaking · Teaching</span></div>
+    <div class="intro reveal" style="--reveal-delay:0.15s">
+      A list of talks I've given over the years — some were lunch-hour lightning rounds, some stretched into full-day trainings and semester-long curricula. I enjoy putting these together.
+    </div>
+  </div>
+
+  <div class="talks-grid">
+    <a class="talk reveal" href="http://nickgs.com/drupal8-testdrive-module/#/" target="_blank" rel="noopener" style="--reveal-delay:0.00s">
+      <span class="num">01</span>
+      <h4>Drupal 8 Module Development</h4>
+      <span class="tag">Workshop · PHP</span>
+      <span class="arrow">→ view</span>
+    </a>
+    <a class="talk reveal" href="http://nickgs.com/smart-contracts/#/" target="_blank" rel="noopener" style="--reveal-delay:0.06s">
+      <span class="num">02</span>
+      <h4>Getting Started with Ethereum Smart Contracts</h4>
+      <span class="tag">Talk · Blockchain</span>
+      <span class="arrow">→ view</span>
+    </a>
+    <a class="talk reveal" href="http://nickgs.com/code2art-talk/#/" target="_blank" rel="noopener" style="--reveal-delay:0.12s">
+      <span class="num">03</span>
+      <h4>Introduction to Creative Coding with p5.js</h4>
+      <span class="tag">Talk · Creative Coding</span>
+      <span class="arrow">→ view</span>
+    </a>
+    <a class="talk reveal" href="http://nickgs.com/hello-docker/" target="_blank" rel="noopener" style="--reveal-delay:0.18s">
+      <span class="num">04</span>
+      <h4>Hello Docker</h4>
+      <span class="tag">Workshop · DevOps</span>
+      <span class="arrow">→ view</span>
+    </a>
+    <a class="talk reveal" href="http://nickgs.com/php-oo-slides/#/" target="_blank" rel="noopener" style="--reveal-delay:0.24s">
+      <span class="num">05</span>
+      <h4>Object-Oriented Programming in PHP</h4>
+      <span class="tag">Curriculum · PHP</span>
+      <span class="arrow">→ view</span>
+    </a>
+    <a class="talk reveal" href="http://nickgs.com/hello-gatsby/" target="_blank" rel="noopener" style="--reveal-delay:0.30s">
+      <span class="num">06</span>
+      <h4>Hello GatsbyJS</h4>
+      <span class="tag">Talk · Front End</span>
+      <span class="arrow">→ view</span>
+    </a>
+    <a class="talk reveal" href="https://erc20.surge.sh" target="_blank" rel="noopener" style="--reveal-delay:0.36s">
+      <span class="num">07</span>
+      <h4>Create Your Own Crypto — Exploring the ERC-20 Token Standard</h4>
+      <span class="tag">Talk · Blockchain</span>
+      <span class="arrow">→ view</span>
+    </a>
+    <a class="talk more reveal" href="https://github.com/nickgs" target="_blank" rel="noopener" style="--reveal-delay:0.42s">
+      <span class="num">—</span>
+      <h4>More on GitHub</h4>
+      <span class="tag">Code · Slides · Demos</span>
+      <span class="arrow">→ visit</span>
+    </a>
+  </div>
+
+  <div class="talks-foot reveal">
+    Have an event and are looking for a speaker? <a href="#contact">Reach out.</a>
+  </div>
+</section>
+
+<footer class="foot reveal" id="contact">
+  <div class="label">Contact<span style="display:block;font-family:var(--serif);font-style:italic;font-size:16px;color:var(--ink);margin-top:6px;letter-spacing:.04em;text-transform:none">say hello</span></div>
+  <div class="socials">
+    <a href="https://github.com/nickgs" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://twitter.com/direct" target="_blank" rel="noopener">Twitter</a>
+    <a href="https://www.linkedin.com/in/nickgs/" target="_blank" rel="noopener">LinkedIn</a>
+  </div>
+  <div class="stamp">© MMXXVI · Long Island, NY</div>
+</footer>
+
+<!-- TWEAKS UI -->
+<button id="todPill" aria-label="Change time of day" title="Time of day">
+  <!-- dawn: half sun rising over horizon -->
+  <svg data-g="dawn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 17 a7 7 0 0 1 14 0" fill="currentColor" fill-opacity="0.85"/>
+    <line x1="2" y1="20" x2="22" y2="20"/>
+    <line x1="12" y1="3" x2="12" y2="6"/>
+    <line x1="4.5" y1="9" x2="6.2" y2="10.5"/>
+    <line x1="19.5" y1="9" x2="17.8" y2="10.5"/>
+  </svg>
+  <!-- golden: full sun -->
+  <svg data-g="golden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <circle cx="12" cy="12" r="4.2" fill="currentColor"/>
+    <line x1="12" y1="2.5" x2="12" y2="5"/>
+    <line x1="12" y1="19" x2="12" y2="21.5"/>
+    <line x1="2.5" y1="12" x2="5" y2="12"/>
+    <line x1="19" y1="12" x2="21.5" y2="12"/>
+    <line x1="5.2" y1="5.2" x2="6.8" y2="6.8"/>
+    <line x1="17.2" y1="17.2" x2="18.8" y2="18.8"/>
+    <line x1="5.2" y1="18.8" x2="6.8" y2="17.2"/>
+    <line x1="17.2" y1="6.8" x2="18.8" y2="5.2"/>
+  </svg>
+  <!-- dusk: sun setting -->
+  <svg data-g="dusk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+    <path d="M5 17 a7 7 0 0 1 14 0" fill="currentColor"/>
+    <line x1="2" y1="20" x2="22" y2="20"/>
+    <line x1="12" y1="6" x2="12" y2="3"/>
+    <line x1="4.5" y1="13" x2="6.2" y2="11.5"/>
+    <line x1="19.5" y1="13" x2="17.8" y2="11.5"/>
+    <polyline points="9,4 12,1 15,4" stroke-linejoin="round" transform="translate(0,2) rotate(180 12 3)"/>
+  </svg>
+  <!-- night: crescent moon -->
+  <svg data-g="night" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 13 A9 9 0 1 1 11 3 A7 7 0 0 0 21 13 Z" fill="currentColor"/>
+  </svg>
+</button>
+
+<div id="tweaks">
+  <h4>
+    <span>Time of Day <small>scene</small></span>
+    <button class="close" aria-label="Close" title="Close">×</button>
+  </h4>
+  <div class="row">
+    <button data-t="auto">Auto</button>
+    <button data-t="dawn">Dawn</button>
+    <button data-t="golden">Golden</button>
+    <button data-t="dusk">Dusk</button>
+    <button data-t="night">Night</button>
+  </div>
+</div>
+
+<script>
+// Zen cherry-blossom scene, stylized low-poly, Three.js
+// Exposes: window.zenScene.setTimeOfDay(key)
+
+(function(){
+  const canvas = document.getElementById('scene');
+  if (!canvas) return;
+
+  // ---------- PALETTES per time of day ----------
+  const PALETTES = {
+    dawn: {
+      // misty blue morning with pink low-horizon warmth
+      skyTop:  0x9bb4cc, skyBot: 0xe6c4c0,
+      ground:  0xb8bec8,
+      trunk:   0x2a2a33,
+      petal:   0x9ac08a, petal2: 0x7aa878,
+      figure:  0x22252e, // unused
+      fog:     0xc8cfd8, fogNear: 18, fogFar: 62,
+      sunPos:  [-18, 10, -20],
+      ambient: 0xcfd8e2, ambIntensity: 0.6,
+      sunColor:0xf4d4c0, sunIntensity: 0.85,
+      uplight: 0xffe0b8, uplightIntensity: 0.9,
+      paper:   '#eef1f4', paperSoft: '#dfe4ea', ink: '#1c222a',
+      sakura:  '#c97a86', inkMute: '#6b7886',
+      accent:  '#4a6a8a'
+    },
+    golden: {
+      // warm amber sky tempered with soft blue-grey ground & fog
+      skyTop:  0xe9b87a, skyBot: 0xf2dfb2,
+      ground:  0x5a5248,
+      trunk:   0x241a14,
+      petal:   0xa8c478, petal2: 0x84a858,
+      figure:  0x171318,
+      fog:     0xc2b8b0, fogNear: 20, fogFar: 68,
+      sunPos:  [22, 8, -14],
+      ambient: 0xe8d4b8, ambIntensity: 0.55,
+      sunColor:0xffc880, sunIntensity: 1.15,
+      uplight: 0xffd9a8, uplightIntensity: 1.4,
+      paper:   '#f2ead9', paperSoft: '#e4dccc', ink: '#1a1613',
+      sakura:  '#c97a7a', inkMute: '#6a5d4f',
+      accent:  '#3a5a7a'
+    },
+    dusk: {
+      // brighter indigo-blue sky with warm coral horizon
+      skyTop:  0x5a7ab0, skyBot: 0xf0a890,
+      ground:  0x5a6478,
+      trunk:   0x141420,
+      petal:   0x88a878, petal2: 0x5e7e60,
+      figure:  0x0a0b12,
+      fog:     0x8a9ab8, fogNear: 18, fogFar: 64,
+      sunPos:  [20, 5, -10],
+      ambient: 0xb4c0d8, ambIntensity: 0.65,
+      sunColor:0xffb488, sunIntensity: 1.15,
+      uplight: 0xffb070, uplightIntensity: 2.2,
+      paper:   '#283246', paperSoft: '#35405a', ink: '#f0ece4',
+      sakura:  '#f0a8b4', inkMute: '#b8c0d4',
+      accent:  '#a0c0e8'
+    },
+    night: {
+      // deep navy, moonlit
+      skyTop:  0x0a1028, skyBot: 0x1e2a48,
+      ground:  0x1a2640,
+      trunk:   0x3a2a1e,
+      petal:   0x8098b8, petal2: 0x6a84a0,
+      figure:  0x030408,
+      fog:     0x0f1a30, fogNear: 14, fogFar: 54,
+      sunPos:  [-6, 14, -8],           // moon
+      ambient: 0x6080c0, ambIntensity: 0.85,
+      sunColor:0xcfdcff, sunIntensity: 0.8,
+      uplight: 0xff9858, uplightIntensity: 7.0,
+      paper:   '#0f1628', paperSoft: '#1a2338', ink: '#e4eaf4',
+      sakura:  '#b8c8e8', inkMute: '#8090b4',
+      accent:  '#8aa8d4'
+    }
+  };
+
+  // ---------- renderer / scene ----------
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
+  camera.position.set(0, 2.2, 14);
+  camera.lookAt(0, 2.0, 0);
+
+  // ---------- sky (vertical gradient via shader plane behind everything) ----------
+  const skyGeo = new THREE.SphereGeometry(80, 32, 16);
+  const skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: {
+      top:    { value: new THREE.Color(PALETTES.golden.skyTop) },
+      bottom: { value: new THREE.Color(PALETTES.golden.skyBot) },
+      offset: { value: 0.25 },
+      exponent: { value: 0.7 }
+    },
+    vertexShader: `
+      varying vec3 vWorldPos;
+      void main(){
+        vec4 wp = modelMatrix * vec4(position,1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      uniform vec3 top; uniform vec3 bottom;
+      uniform float offset; uniform float exponent;
+      varying vec3 vWorldPos;
+      void main(){
+        float h = normalize(vWorldPos + vec3(0.0, offset, 0.0)).y;
+        float t = max(pow(max(h, 0.0), exponent), 0.0);
+        vec3 col = mix(bottom, top, t);
+        gl_FragColor = vec4(col, 1.0);
+      }`
+  });
+  const sky = new THREE.Mesh(skyGeo, skyMat);
+  scene.add(sky);
+
+  // ---------- stars (visible at night, faded out otherwise) ----------
+  const STAR_COUNT = 650;
+  const starPositions = new Float32Array(STAR_COUNT * 3);
+  const starSizes = new Float32Array(STAR_COUNT);
+  const starPhase = new Float32Array(STAR_COUNT);
+  for (let i = 0; i < STAR_COUNT; i++) {
+    // distribute on the upper half of a dome, biased away from the horizon
+    const u = Math.random();
+    const v = Math.random();
+    const theta = 2 * Math.PI * u;
+    const phi = Math.acos(1 - v * 0.85);
+    const r = 60 + Math.random() * 12;
+    starPositions[i*3  ] = r * Math.sin(phi) * Math.cos(theta);
+    starPositions[i*3+1] = r * Math.cos(phi) + 2;
+    starPositions[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
+    // bigger range — some really bright stars
+    starSizes[i] = 0.8 + Math.random() * Math.random() * 2.8;
+    starPhase[i] = Math.random() * Math.PI * 2;
+  }
+  const starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+  starGeo.setAttribute('aSize', new THREE.BufferAttribute(starSizes, 1));
+  starGeo.setAttribute('aPhase', new THREE.BufferAttribute(starPhase, 1));
+
+  const starMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uOpacity: { value: 0 },           // 0 by default — faded in only at night
+      uColor: { value: new THREE.Color(0xf4f0e4) }
+    },
+    vertexShader: `
+      attribute float aSize;
+      attribute float aPhase;
+      varying float vTwinkle;
+      uniform float uTime;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mv;
+        float tw = 0.55 + 0.45 * sin(uTime * 1.6 + aPhase) * sin(uTime * 0.9 + aPhase * 1.7);
+        vTwinkle = tw;
+        gl_PointSize = aSize * tw * (340.0 / -mv.z);
+      }
+    `,
+    fragmentShader: `
+      uniform float uOpacity;
+      uniform vec3 uColor;
+      varying float vTwinkle;
+      void main() {
+        vec2 d = gl_PointCoord - vec2(0.5);
+        float r = length(d);
+        if (r > 0.5) discard;
+        // tight bright core with a soft falloff — reads as a real star pinpoint
+        float core = smoothstep(0.18, 0.0, r);
+        float halo = smoothstep(0.5, 0.2, r) * 0.35;
+        float a = core + halo;
+        gl_FragColor = vec4(uColor, a * uOpacity * vTwinkle);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    fog: false
+  });
+  const stars = new THREE.Points(starGeo, starMat);
+  // no renderOrder override — let depth test do the work so the tree occludes stars
+  scene.add(stars);
+
+  // ---------- fog ----------
+  scene.fog = new THREE.Fog(PALETTES.golden.fog, PALETTES.golden.fogNear, PALETTES.golden.fogFar);
+
+  // ---------- lights ----------
+  const ambient = new THREE.AmbientLight(PALETTES.golden.ambient, PALETTES.golden.ambIntensity);
+  scene.add(ambient);
+  const sun = new THREE.DirectionalLight(PALETTES.golden.sunColor, PALETTES.golden.sunIntensity);
+  sun.position.set(...PALETTES.golden.sunPos);
+  scene.add(sun);
+
+  // warm uplight at the trunk base — soft spot pointing up into the canopy
+  const trunkLight = new THREE.SpotLight(PALETTES.golden.uplight, PALETTES.golden.uplightIntensity, 20, Math.PI * 0.55, 0.7, 1.0);
+  trunkLight.position.set(0, 0.05, 0.6);  // slightly in front of trunk, near ground
+  trunkLight.target.position.set(0, 5, 0); // aim up at canopy
+  scene.add(trunkLight);
+  scene.add(trunkLight.target);
+
+  // secondary: a soft ember point light lower on the trunk — fills the bark + figure silhouette
+  const emberLight = new THREE.PointLight(0xff8a50, 0, 12, 1.4);
+  emberLight.position.set(0, 1.2, 0.8);
+  scene.add(emberLight);
+  const fill = new THREE.HemisphereLight(0xffd8b0, 0x604030, 0.25);
+  scene.add(fill);
+
+  // ---------- ground ----------
+  const groundMat = new THREE.MeshLambertMaterial({ color: PALETTES.golden.ground });
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 48), groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = 0;
+  scene.add(ground);
+
+  // small stones scattered
+  const stoneMat = new THREE.MeshLambertMaterial({ color: 0x7a6a55 });
+  for (let i = 0; i < 18; i++) {
+    const g = new THREE.DodecahedronGeometry(0.08 + Math.random()*0.15, 0);
+    const m = new THREE.Mesh(g, stoneMat);
+    const r = 3 + Math.random() * 10;
+    const a = Math.random() * Math.PI * 2;
+    m.position.set(Math.cos(a)*r, 0.02, Math.sin(a)*r - 1.5);
+    m.rotation.y = Math.random() * Math.PI;
+    m.scale.y *= 0.4;
+    scene.add(m);
+  }
+
+  // ---------- the tree ----------
+  const tree = new THREE.Group();
+  tree.position.set(0.2, 0, -1.5);
+  scene.add(tree);
+
+  // trunk — slightly curved cylinder built from segments
+  const trunkGroup = new THREE.Group();
+  tree.add(trunkGroup);
+  const trunkMat = new THREE.MeshLambertMaterial({ color: PALETTES.golden.trunk });
+
+  // main trunk
+  function makeBranch(len, radTop, radBot, tilt, twist) {
+    const geom = new THREE.CylinderGeometry(radTop, radBot, len, 7, 1);
+    const m = new THREE.Mesh(geom, trunkMat);
+    m.geometry.translate(0, len/2, 0);
+    m.rotation.z = tilt;
+    m.rotation.y = twist;
+    return m;
+  }
+
+  const mainTrunk = makeBranch(4.2, 0.18, 0.35, 0.08, 0);
+  trunkGroup.add(mainTrunk);
+
+  // primary branches (a few hand-placed so it looks composed, not random)
+  const branchSpecs = [
+    { parent: mainTrunk, y: 3.2, len: 2.2, rT: 0.08, rB: 0.16, tilt: -0.9,  twist: 0.3 },
+    { parent: mainTrunk, y: 3.6, len: 2.0, rT: 0.07, rB: 0.14, tilt:  0.85, twist: -0.4 },
+    { parent: mainTrunk, y: 2.6, len: 1.7, rT: 0.07, rB: 0.13, tilt: -1.1,  twist: -0.2 },
+    { parent: mainTrunk, y: 3.9, len: 1.5, rT: 0.06, rB: 0.11, tilt:  0.3,  twist: 0.2 },
+    { parent: mainTrunk, y: 2.2, len: 1.2, rT: 0.05, rB: 0.10, tilt:  1.0,  twist: 0.6 },
+  ];
+  const branches = [];
+  branchSpecs.forEach(s => {
+    const b = makeBranch(s.len, s.rT, s.rB, s.tilt, s.twist);
+    b.position.y = s.y;
+    trunkGroup.add(b);
+    branches.push(b);
+
+    // secondary twigs
+    for (let i = 0; i < 2; i++) {
+      const t = makeBranch(s.len * 0.55, s.rT*0.6, s.rB*0.7, s.tilt + (i?0.5:-0.5), s.twist + (i?0.4:-0.4));
+      t.position.y = s.len * (0.55 + i*0.2);
+      b.add(t);
+    }
+  });
+
+  // ---------- foliage clumps (low-poly blossom blobs) ----------
+  const blossomMat1 = new THREE.MeshLambertMaterial({ color: PALETTES.golden.petal, transparent: true, opacity: 0.95 });
+  const blossomMat2 = new THREE.MeshLambertMaterial({ color: PALETTES.golden.petal2, transparent: true, opacity: 0.92 });
+
+  const foliageGroup = new THREE.Group();
+  tree.add(foliageGroup);
+
+  function addBlossomClump(pos, scale) {
+    const cluster = new THREE.Group();
+    const count = 6 + Math.floor(Math.random()*4);
+    for (let i = 0; i < count; i++) {
+      const s = 0.35 + Math.random()*0.35;
+      const geo = new THREE.IcosahedronGeometry(s, 0);
+      const m = new THREE.Mesh(geo, Math.random() > 0.5 ? blossomMat1 : blossomMat2);
+      m.position.set(
+        (Math.random()-0.5)*0.9,
+        (Math.random()-0.5)*0.6,
+        (Math.random()-0.5)*0.9
+      );
+      m.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
+      cluster.add(m);
+    }
+    cluster.position.copy(pos);
+    cluster.scale.setScalar(scale);
+    foliageGroup.add(cluster);
+    return cluster;
+  }
+
+  // Canopy — umbrella-like spread above the tree
+  const canopyPositions = [
+    new THREE.Vector3(-1.4, 4.8,  0.2), new THREE.Vector3( 1.3, 4.9, -0.1),
+    new THREE.Vector3( 0.0, 5.4,  0.3), new THREE.Vector3(-0.6, 5.1, -0.9),
+    new THREE.Vector3( 0.8, 5.0,  1.0), new THREE.Vector3(-2.0, 4.4, -0.3),
+    new THREE.Vector3( 2.1, 4.5,  0.4), new THREE.Vector3(-0.2, 4.4,  1.2),
+    new THREE.Vector3( 0.4, 4.4, -1.2), new THREE.Vector3(-1.6, 4.7,  1.1),
+    new THREE.Vector3( 1.7, 4.6, -0.9), new THREE.Vector3( 0.0, 4.1,  0.0),
+  ];
+  const clumps = canopyPositions.map(p => addBlossomClump(p, 0.9 + Math.random()*0.4));
+
+  // ---------- meditating silhouette removed ----------
+
+  // ---------- distant silhouette trees (parallax depth) ----------
+  const distantMat = new THREE.MeshBasicMaterial({ color: 0x8a6a58, transparent: true, opacity: 0.35, fog: true });
+  for (let i = 0; i < 8; i++) {
+    const h = 2 + Math.random()*3;
+    const t = new THREE.Mesh(new THREE.ConeGeometry(0.5 + Math.random()*0.4, h, 6), distantMat);
+    const a = (Math.random() - 0.5) * Math.PI * 1.4 + Math.PI;
+    const r = 28 + Math.random()*14;
+    t.position.set(Math.cos(a)*r, h/2, Math.sin(a)*r);
+    scene.add(t);
+  }
+
+  // ---------- drifting petals (instanced) ----------
+  const PETAL_COUNT = 140;
+  const petalGeo = new THREE.PlaneGeometry(0.08, 0.11);
+  const petalMat = new THREE.MeshBasicMaterial({
+    color: PALETTES.golden.petal,
+    transparent: true,
+    opacity: 0.9,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    fog: true
+  });
+  const petals = new THREE.InstancedMesh(petalGeo, petalMat, PETAL_COUNT);
+  petals.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  scene.add(petals);
+
+  const petalData = [];
+  const dummy = new THREE.Object3D();
+  for (let i = 0; i < PETAL_COUNT; i++) {
+    petalData.push({
+      x: (Math.random()-0.5)*16,
+      y: Math.random() * 10 + 0.5,
+      z: (Math.random()-0.5)*10 - 1,
+      vy: 0.15 + Math.random()*0.25,
+      vx: (Math.random()-0.5)*0.12,
+      vz: (Math.random()-0.5)*0.08,
+      rot: Math.random() * Math.PI * 2,
+      vrot: (Math.random()-0.5)*1.5,
+      swayPhase: Math.random() * Math.PI * 2,
+      swayAmp: 0.3 + Math.random()*0.5,
+      scale: 0.6 + Math.random()*0.9
+    });
+  }
+
+  // ---------- resize ----------
+  function resize() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ---------- tween util ----------
+  function lerpColor(mat, prop, to, t) {
+    if (!mat[prop]) return;
+    mat[prop].lerp(to, t);
+  }
+
+  // ---------- set time of day ----------
+  let targetPal = PALETTES.golden;
+  let currentPal = {
+    skyTop: new THREE.Color(PALETTES.golden.skyTop),
+    skyBot: new THREE.Color(PALETTES.golden.skyBot),
+    ground: new THREE.Color(PALETTES.golden.ground),
+    trunk: new THREE.Color(PALETTES.golden.trunk),
+    petal: new THREE.Color(PALETTES.golden.petal),
+    petal2: new THREE.Color(PALETTES.golden.petal2),
+    fog: new THREE.Color(PALETTES.golden.fog),
+    ambient: new THREE.Color(PALETTES.golden.ambient),
+    sunColor: new THREE.Color(PALETTES.golden.sunColor),
+    uplight: new THREE.Color(PALETTES.golden.uplight),
+    fogNear: PALETTES.golden.fogNear,
+    fogFar: PALETTES.golden.fogFar,
+    ambIntensity: PALETTES.golden.ambIntensity,
+    sunIntensity: PALETTES.golden.sunIntensity,
+    uplightIntensity: PALETTES.golden.uplightIntensity,
+    sunPos: PALETTES.golden.sunPos.slice()
+  };
+
+  function setTimeOfDay(key) {
+    if (!PALETTES[key]) return;
+    targetPal = PALETTES[key];
+
+    // update page CSS vars to match scene mood
+    const root = document.documentElement;
+    root.setAttribute('data-tod', key);
+    root.style.setProperty('--paper', targetPal.paper);
+    root.style.setProperty('--paper-2', targetPal.paperSoft);
+    root.style.setProperty('--ink', targetPal.ink);
+    root.style.setProperty('--sakura', targetPal.sakura);
+    if (targetPal.accent) {
+      root.style.setProperty('--indigo', targetPal.accent);
+    }
+    root.style.setProperty('--ink-mute', targetPal.inkMute);
+    // derive soft ink
+    const inkSoftMap = {
+      dawn: '#3b332c', golden: '#3b332c',
+      dusk: '#d8c8b8', night: '#c0bca8'
+    };
+    const ruleMap = {
+      dawn: 'rgba(26,22,19,0.14)', golden: 'rgba(26,22,19,0.14)',
+      dusk: 'rgba(243,228,212,0.18)', night: 'rgba(232,228,216,0.14)'
+    };
+    root.style.setProperty('--ink-soft', inkSoftMap[key]);
+    root.style.setProperty('--rule', ruleMap[key]);
+  }
+
+  // ---------- parallax on scroll ----------
+  let scrollY = 0;
+  window.addEventListener('scroll', () => {
+    scrollY = window.scrollY;
+  }, { passive: true });
+
+  // pointer (subtle)
+  let pointerX = 0, pointerY = 0;
+  window.addEventListener('pointermove', (e) => {
+    pointerX = (e.clientX / window.innerWidth) * 2 - 1;
+    pointerY = (e.clientY / window.innerHeight) * 2 - 1;
+  });
+
+  // ---------- animate ----------
+  const clock = new THREE.Clock();
+  function animate() {
+    const t = clock.getElapsedTime();
+    const dt = Math.min(clock.getDelta() + 0.0166, 0.05); // capped delta
+
+    // --- smooth palette transition ---
+    const lerpT = 0.04;
+    currentPal.skyTop.lerp(new THREE.Color(targetPal.skyTop), lerpT);
+    currentPal.skyBot.lerp(new THREE.Color(targetPal.skyBot), lerpT);
+    currentPal.ground.lerp(new THREE.Color(targetPal.ground), lerpT);
+    currentPal.trunk.lerp(new THREE.Color(targetPal.trunk), lerpT);
+    currentPal.petal.lerp(new THREE.Color(targetPal.petal), lerpT);
+    currentPal.petal2.lerp(new THREE.Color(targetPal.petal2), lerpT);
+    currentPal.fog.lerp(new THREE.Color(targetPal.fog), lerpT);
+    currentPal.ambient.lerp(new THREE.Color(targetPal.ambient), lerpT);
+    currentPal.sunColor.lerp(new THREE.Color(targetPal.sunColor), lerpT);
+    currentPal.uplight.lerp(new THREE.Color(targetPal.uplight), lerpT);
+    currentPal.fogNear += (targetPal.fogNear - currentPal.fogNear) * lerpT;
+    currentPal.fogFar += (targetPal.fogFar - currentPal.fogFar) * lerpT;
+    currentPal.ambIntensity += (targetPal.ambIntensity - currentPal.ambIntensity) * lerpT;
+    currentPal.sunIntensity += (targetPal.sunIntensity - currentPal.sunIntensity) * lerpT;
+    currentPal.uplightIntensity += (targetPal.uplightIntensity - currentPal.uplightIntensity) * lerpT;
+    for (let i = 0; i < 3; i++) {
+      currentPal.sunPos[i] += (targetPal.sunPos[i] - currentPal.sunPos[i]) * lerpT;
+    }
+
+    // apply
+    skyMat.uniforms.top.value.copy(currentPal.skyTop);
+    skyMat.uniforms.bottom.value.copy(currentPal.skyBot);
+    groundMat.color.copy(currentPal.ground);
+    trunkMat.color.copy(currentPal.trunk);
+    blossomMat1.color.copy(currentPal.petal);
+    blossomMat2.color.copy(currentPal.petal2);
+    scene.fog.color.copy(currentPal.fog);
+    scene.fog.near = currentPal.fogNear;
+    scene.fog.far = currentPal.fogFar;
+    ambient.color.copy(currentPal.ambient);
+    ambient.intensity = currentPal.ambIntensity;
+    // stars — fade in when targeting night
+    const nightTarget = (targetPal === PALETTES.night) ? 1.0 : 0.0;
+    starMat.uniforms.uOpacity.value += (nightTarget - starMat.uniforms.uOpacity.value) * 0.03;
+    starMat.uniforms.uTime.value = t;
+    // slow celestial drift
+    stars.rotation.y = t * 0.008;
+
+    // ember fill \u2014 only at night, with flicker
+    const targetEmber = nightTarget * 3.5;
+    emberLight.intensity += (targetEmber - emberLight.intensity) * 0.04;
+    emberLight.intensity *= (0.92 + Math.sin(t * 3.4) * 0.05 + Math.sin(t * 7.8) * 0.04);
+
+    sun.color.copy(currentPal.sunColor);
+    sun.intensity = currentPal.sunIntensity;
+    trunkLight.color.copy(currentPal.uplight);
+    // gentle flicker — lantern-like
+    trunkLight.intensity = currentPal.uplightIntensity * (0.96 + Math.sin(t * 2.3) * 0.02 + Math.sin(t * 5.1) * 0.015);
+    sun.position.set(currentPal.sunPos[0], currentPal.sunPos[1], currentPal.sunPos[2]);
+    petalMat.color.copy(currentPal.petal);
+
+    // --- gentle wind on canopy ---
+    foliageGroup.children.forEach((c, i) => {
+      c.rotation.z = Math.sin(t * 0.4 + i) * 0.03;
+      c.rotation.x = Math.cos(t * 0.3 + i * 0.7) * 0.02;
+    });
+    // trunk sway, barely
+    trunkGroup.rotation.z = Math.sin(t * 0.25) * 0.005;
+
+    // figure breathing removed
+
+    // --- petals ---
+    for (let i = 0; i < PETAL_COUNT; i++) {
+      const p = petalData[i];
+      p.y -= p.vy * dt;
+      p.x += p.vx * dt + Math.sin(t * 0.8 + p.swayPhase) * 0.01 * p.swayAmp;
+      p.z += p.vz * dt;
+      p.rot += p.vrot * dt;
+      if (p.y < 0.02) {
+        p.y = 8 + Math.random() * 4;
+        p.x = (Math.random()-0.5)*16;
+        p.z = (Math.random()-0.5)*10 - 1;
+      }
+      dummy.position.set(p.x, p.y, p.z);
+      dummy.rotation.set(p.rot, p.rot*0.7, p.rot*0.5);
+      dummy.scale.setScalar(p.scale);
+      dummy.updateMatrix();
+      petals.setMatrixAt(i, dummy.matrix);
+    }
+    petals.instanceMatrix.needsUpdate = true;
+
+    // --- camera parallax ---
+    // scroll maps 0..(window.innerHeight) -> drift camera gently
+    const scrollNorm = Math.min(scrollY / Math.max(window.innerHeight, 1), 1.2);
+    const targetCamY = 2.2 + scrollNorm * 1.2;
+    const targetCamZ = 14 - scrollNorm * 2.0;
+    const targetCamX = pointerX * 0.4;
+    camera.position.x += (targetCamX - camera.position.x) * 0.04;
+    camera.position.y += (targetCamY - camera.position.y) * 0.04;
+    camera.position.z += (targetCamZ - camera.position.z) * 0.04;
+    const lookY = 2.0 + pointerY * 0.15 - scrollNorm * 0.4;
+    camera.lookAt(0, lookY, 0);
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  window.zenScene = { setTimeOfDay };
+})();
+
+</script>
+<script>
+// Page wiring: clock, tweaks panel, edit-mode protocol
+(function(){
+
+  // --- local time clock (Long Island / ET) ---
+  const clockEl = document.getElementById('clock');
+  function tick() {
+    const d = new Date();
+    const opts = { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false };
+    const time = d.toLocaleTimeString('en-US', opts);
+    if (clockEl) clockEl.textContent = time + ' ET';
+  }
+  tick();
+  setInterval(tick, 30_000);
+
+  // --- tweaks ---
+  const panel = document.getElementById('tweaks');
+  const pill = document.getElementById('todPill');
+  const closeBtn = panel.querySelector('.close');
+  const buttons = panel.querySelectorAll('button[data-t]');
+
+  function openPanel()  { panel.classList.add('open');    pill.classList.add('expanded'); }
+  function closePanel() { panel.classList.remove('open'); pill.classList.remove('expanded'); }
+
+  pill.addEventListener('click', () => {
+    panel.classList.contains('open') ? closePanel() : openPanel();
+  });
+  closeBtn.addEventListener('click', closePanel);
+
+  // click outside the panel closes it
+  document.addEventListener('pointerdown', (e) => {
+    if (!panel.classList.contains('open')) return;
+    if (panel.contains(e.target) || pill.contains(e.target)) return;
+    closePanel();
+  });
+  // esc key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
+  });
+
+  // map local time → one of dawn/golden/dusk/night
+  function todFromClock(d = new Date()) {
+    const h = d.getHours() + d.getMinutes() / 60;
+    if (h >= 5  && h < 8)  return 'dawn';
+    if (h >= 8  && h < 16) return 'golden';
+    if (h >= 16 && h < 20) return 'dusk';
+    return 'night';   // 20:00 – 05:00
+  }
+
+  let autoTimer = null;
+  function startAuto() {
+    const tick = () => {
+      const k = todFromClock();
+      if (window.zenScene) window.zenScene.setTimeOfDay(k);
+    };
+    tick();
+    clearInterval(autoTimer);
+    autoTimer = setInterval(tick, 5 * 60 * 1000);   // re-check every 5 min
+  }
+  function stopAuto() {
+    clearInterval(autoTimer);
+    autoTimer = null;
+  }
+
+  function applyTime(key) {
+    currentTweaks.timeOfDay = key;
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.t === key));
+    if (key === 'auto') {
+      startAuto();
+    } else {
+      stopAuto();
+      if (window.zenScene) window.zenScene.setTimeOfDay(key);
+    }
+  }
+
+  buttons.forEach(b => {
+    b.addEventListener('click', () => applyTime(b.dataset.t));
+  });
+
+  // initial
+  applyTime(currentTweaks.timeOfDay || 'auto');
+
+  // --- soft reveal on scroll ---
+  const reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    reveals.forEach(el => io.observe(el));
+  } else {
+    reveals.forEach(el => el.classList.add('in'));
+  }
+
+})();
+
+</script>
+
+<canvas id="petalCanvas" aria-hidden="true"></canvas>
+<div id="petalRing" aria-hidden="true"></div>
+
+<script>
+(function(){
+  // skip entirely on coarse pointers / reduced motion
+  const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!fine || reduce) return;
+
+  const canvas = document.getElementById('petalCanvas');
+  const ring   = document.getElementById('petalRing');
+
+  // apply critical styles inline so nothing can override them
+  Object.assign(canvas.style, {
+    position: 'fixed',
+    top: '0', left: '0', right: '0', bottom: '0',
+    width: '100vw',
+    height: '100vh',
+    pointerEvents: 'none',
+    zIndex: '60',
+    display: 'block'
+  });
+  Object.assign(ring.style, {
+    position: 'fixed',
+    top: '0', left: '0',
+    width: '22px',
+    height: '22px',
+    marginTop: '-11px',
+    marginLeft: '-11px',
+    border: '1px solid rgba(232, 156, 173, 0.85)',
+    background: 'radial-gradient(circle, rgba(232,156,173,0.18), rgba(232,156,173,0))',
+    borderRadius: '50%',
+    pointerEvents: 'none',
+    zIndex: '61',
+    transition: 'width 0.25s ease, height 0.25s ease, margin 0.25s ease, border-color 0.25s ease',
+    willChange: 'left, top'
+  });
+  // hide native cursor on fine pointers
+  document.documentElement.style.cursor = 'none';
+  document.body.style.cursor = 'none';
+
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // pointer tracking
+  let px = W/2, py = H/2;       // actual pointer
+  let rx = W/2, ry = H/2;       // eased ring position
+  let lastX = px, lastY = py;
+  let lastEmit = 0;
+  let active = false;
+
+  window.addEventListener('pointermove', (e) => {
+    px = e.clientX;
+    py = e.clientY;
+    active = true;
+  }, { passive: true });
+
+  window.addEventListener('pointerdown', (e) => {
+    // burst of petals on click
+    burst(e.clientX, e.clientY, 8);
+  });
+
+  // hover-reactive ring
+  const isInteractive = (el) => !!(el && el.closest && el.closest('a, button, .talk, .entry, input, textarea, select, [data-hover]'));
+  let overInteractive = false;
+  window.addEventListener('pointerover', (e) => {
+    const hit = isInteractive(e.target);
+    if (hit !== overInteractive) {
+      overInteractive = hit;
+      if (hit) {
+        Object.assign(ring.style, {
+          width: '38px', height: '38px',
+          marginTop: '-19px', marginLeft: '-19px',
+          borderColor: 'rgba(255,255,255,0.9)',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%)'
+        });
+      } else {
+        Object.assign(ring.style, {
+          width: '22px', height: '22px',
+          marginTop: '-11px', marginLeft: '-11px',
+          borderColor: 'rgba(232, 156, 173, 0.85)',
+          background: 'radial-gradient(circle, rgba(232,156,173,0.18), rgba(232,156,173,0))'
+        });
+      }
+    }
+  });
+
+  // hide ring when mouse leaves window
+  window.addEventListener('pointerleave', () => { active = false; ring.style.opacity = 0; });
+  window.addEventListener('pointerenter', () => { active = true; ring.style.opacity = 1; });
+
+  // ---------- petals ----------
+  const petals = [];
+  const MAX = 320;
+
+  // palette tied to scene mood (pink/white tints that read on any bg)
+  const COLORS = [
+    { h: 345, s: 55, l: 78 }, // light pink
+    { h: 350, s: 60, l: 70 }, // deeper rose
+    { h: 20,  s: 45, l: 85 }, // warm cream
+    { h: 0,   s: 0,  l: 100 } // pure white
+  ];
+
+  function spawn(x, y, opts = {}) {
+    if (petals.length >= MAX) petals.shift();
+    const c = COLORS[(Math.random() * COLORS.length) | 0];
+    petals.push({
+      x: x + (Math.random()-0.5) * 6,
+      y: y + (Math.random()-0.5) * 6,
+      vx: (opts.vx ?? 0) + (Math.random()-0.5) * 0.4,
+      vy: (opts.vy ?? 0.3) + Math.random() * 0.5,
+      w: 7 + Math.random() * 8,
+      h: 10 + Math.random() * 10,
+      rot: Math.random() * Math.PI * 2,
+      vrot: (Math.random()-0.5) * 0.06,
+      sway: Math.random() * Math.PI * 2,
+      swaySpd: 0.015 + Math.random()*0.02,
+      age: 0,
+      life: 180 + Math.random() * 180,
+      col: c,
+      alpha: 0.9
+    });
+  }
+
+  function burst(x, y, n) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 1.2 + Math.random() * 2.4;
+      spawn(x, y, { vx: Math.cos(a) * s, vy: Math.sin(a) * s });
+    }
+  }
+
+  function drawPetal(p) {
+    // stylized 5-petal-ish shape via two ellipses + tip
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    const {h, s, l} = p.col;
+    // soft inner fill
+    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.h);
+    grad.addColorStop(0, `hsla(${h},${s}%,${Math.min(l+6,95)}%,${p.alpha})`);
+    grad.addColorStop(1, `hsla(${h},${s}%,${l}%,${p.alpha*0.85})`);
+    ctx.fillStyle = grad;
+    // petal shape: teardrop
+    ctx.beginPath();
+    ctx.moveTo(0, -p.h*0.5);
+    ctx.bezierCurveTo(p.w*0.8, -p.h*0.3, p.w*0.6, p.h*0.5, 0, p.h*0.5);
+    ctx.bezierCurveTo(-p.w*0.6, p.h*0.5, -p.w*0.8, -p.h*0.3, 0, -p.h*0.5);
+    ctx.fill();
+    // notch at tip (classic sakura silhouette)
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.ellipse(0, p.h*0.45, p.w*0.18, p.h*0.12, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.restore();
+  }
+
+  // tick
+  let lastT = performance.now();
+  function tick(t) {
+    const dt = Math.min(t - lastT, 40);
+    lastT = t;
+
+    // ease ring position
+    rx += (px - rx) * 0.22;
+    ry += (py - ry) * 0.22;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+
+    // emit cadence: faster when moving, slower (but still dripping) when still
+    const dx = px - lastX, dy = py - lastY;
+    const speed = Math.hypot(dx, dy);
+    lastX = px; lastY = py;
+    lastEmit += dt;
+    const interval = active
+      ? Math.max(28, 140 - speed * 4)     // slower stream while moving
+      : 380;                              // gentle drip when still
+    if (active && lastEmit > interval) {
+      lastEmit = 0;
+      // emit 1 petal per tick for a softer effect
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.random() * 16;
+      const drift = 0.25 + Math.random() * 0.4;
+      spawn(rx + Math.cos(a) * r, ry + Math.sin(a) * r, {
+        vx: Math.cos(a) * drift + dx * 0.01,
+        vy: Math.sin(a) * drift + dy * 0.01
+      });
+    }
+
+    // render petals
+    ctx.clearRect(0, 0, W, H);
+    for (let i = petals.length - 1; i >= 0; i--) {
+      const p = petals[i];
+      p.age += dt;
+      // gentle drift — no gravity; petals float + sway + slow down
+      p.vx += Math.sin(t * 0.001 + p.sway) * 0.003;
+      p.vy += Math.cos(t * 0.0012 + p.sway) * 0.002;
+      p.vx *= 0.985; // drag
+      p.vy *= 0.985;
+      p.sway += p.swaySpd;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vrot;
+
+      // fade in briefly, then fade out over lifetime
+      const lifeT = p.age / p.life;
+      const fadeIn = Math.min(1, p.age / 120);
+      p.alpha = fadeIn * Math.max(0, 1 - lifeT) * 0.92;
+      if (p.x < -40 || p.x > W + 40 || p.y < -40 || p.y > H + 40 || p.age > p.life) {
+        petals.splice(i, 1);
+        continue;
+      }
+      drawPetal(p);
+    }
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>
