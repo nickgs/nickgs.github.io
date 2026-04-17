@@ -1,0 +1,12 @@
+{
+  "name": "nickgs-homepage",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Personal homepage — nickgs.com",
+  "scripts": {
+    "deploy": "gh-pages -d . -b master --add --src \"{index.html,favicon-32x32.png,CNAME}\""
+  },
+  "devDependencies": {
+    "gh-pages": "^6.1.1"
+  }
+}
